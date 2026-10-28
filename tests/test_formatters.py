@@ -5,7 +5,7 @@ from minilog.record import Record
 
 
 def rec(msg="hello", **f):
-    return Record.create("info", msg, "app", timestamp=0.0, **f)
+    return Record.create("info", msg, "app", 0.0, **f)
 
 
 def test_json_field_order():
@@ -58,7 +58,7 @@ def test_json_max_message_truncates():
 
 
 def test_json_non_string_keys():
-    d = json.loads(JSONFormatter().format(Record.create("info", "m", timestamp=0, **{"k": {1: 2}})))
+    d = json.loads(JSONFormatter().format(Record.create("info", "m", "root", 0, **{"k": {1: 2}})))
     assert d["k"] == {"1": 2}
 
 

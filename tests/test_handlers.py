@@ -11,7 +11,7 @@ FMT = KeyValueFormatter()
 
 
 def r(msg="m", level="info"):
-    return Record.create(level, msg, timestamp=0)
+    return Record.create(level, msg, "root", 0)
 
 
 def test_stream_writes_line():
