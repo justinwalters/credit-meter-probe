@@ -41,7 +41,7 @@ class Record:
 
     @classmethod
     def create(cls, level: int | str, message: str, logger: str = "root",
-               timestamp: float | None = None, **fields: Any) -> "Record":
+               timestamp: float | None = None, /, **fields: Any) -> "Record":
         return cls(
             level=level_value(level),
             message=str(message),
