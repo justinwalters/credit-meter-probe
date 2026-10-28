@@ -58,9 +58,16 @@ class JSONFormatter:
         items = _ordered(record)
         if self.max_message is not None:
             items = [(k, v[: self.max_message] if k == "msg" else v) for k, v in items]
-        obj = {k: _sanitize(v) for k, v in items}
-        return json.dumps(obj, ensure_ascii=self.ensure_ascii, default=_json_default,
-                          allow_nan=False)
+        try:
+            obj = {k: _sanitize(v) for k, v in items}
+            return json.dumps(obj, ensure_ascii=self.ensure_ascii, default=_json_default,
+                              allow_nan=False)
+        except (ValueError, RecursionError, TypeError):
+            # circular references or pathological nesting: fall back to repr()
+            obj = {k: v if k in CORE_KEYS or isinstance(v, (str, int, bool)) else repr(v)
+                   for k, v in items}
+            return json.dumps(obj, ensure_ascii=self.ensure_ascii, default=_json_default,
+                              allow_nan=False)
 
 
 _NEEDS_QUOTE = set(' ="\\\n\r\t')
