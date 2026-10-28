@@ -65,27 +65,31 @@ class RotatingFileHandler(Handler):
         # O_NOFOLLOW refuses to write through a symlink planted at the log path.
         flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0)
         fd = os.open(self.path, flags, 0o600)
-        self._fh = os.fdopen(fd, "a", encoding=self.encoding, newline="")
+        self._fh = os.fdopen(fd, "a", encoding=self.encoding, errors="backslashreplace",
+                             newline="")
         self._size = os.fstat(fd).st_size
 
     def _rotate(self) -> None:
         assert self._fh is not None
         self._fh.close()
         self._fh = None
-        if self.backup_count == 0:
-            os.remove(self.path)
-        else:
-            for i in range(self.backup_count - 1, 0, -1):
-                src, dst = f"{self.path}.{i}", f"{self.path}.{i + 1}"
-                if os.path.exists(src):
-                    os.replace(src, dst)
-            os.replace(self.path, f"{self.path}.1")
-        self._open()
+        try:
+            if self.backup_count == 0:
+                os.remove(self.path)
+            else:
+                for i in range(self.backup_count - 1, 0, -1):
+                    src, dst = f"{self.path}.{i}", f"{self.path}.{i + 1}"
+                    if os.path.exists(src):
+                        os.replace(src, dst)
+                os.replace(self.path, f"{self.path}.1")
+        finally:
+            # always reopen, even if renaming failed, so the handler stays usable
+            self._open()
 
     def emit(self, text: str) -> None:
         if self._fh is None:
             raise ValueError("handler is closed")
-        n = len(text.encode(self.encoding))
+        n = len(text.encode(self.encoding, errors="backslashreplace"))
         if self._size > 0 and self._size + n > self.max_bytes:
             self._rotate()
         self._fh.write(text)
